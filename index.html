@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UPSC Notes Vault</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --card: #21253a;
+    --accent: #6c8ef5;
+    --accent2: #a78bfa;
+    --text: #e8eaf6;
+    --muted: #7b82a0;
+    --border: #2d3252;
+    --success: #4ade80;
+    --radius: 14px;
+    --font: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    padding-bottom: 32px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #1a1d27 0%, #21253a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 20px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .logo {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+
+  .header h1 {
+    font-size: 18px; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .header p { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  /* ── SEARCH ── */
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px 10px 38px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--muted); }
+  .search-icon {
+    position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted); font-size: 15px;
+    pointer-events: none;
+  }
+
+  /* ── BREADCRUMB ── */
+  .breadcrumb {
+    display: flex; align-items: center; gap: 6px;
+    padding: 12px 20px 0;
+    font-size: 13px; color: var(--muted);
+  }
+  .breadcrumb .crumb {
+    cursor: pointer; color: var(--accent);
+    transition: opacity 0.2s;
+  }
+  .breadcrumb .crumb:hover { opacity: 0.8; }
+  .breadcrumb .sep { color: var(--border); }
+  .breadcrumb .current { color: var(--text); }
+
+  /* ── SUBJECTS GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 16px 20px;
+  }
+
+  .subject-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    position: relative; overflow: hidden;
+  }
+  .subject-card:active { transform: scale(0.97); }
+  .subject-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent)22;
+  }
+  .subject-card .glow {
+    position: absolute; top: -20px; right: -20px;
+    width: 70px; height: 70px; border-radius: 50%;
+    opacity: 0.12;
+  }
+  .subject-card .emoji { font-size: 28px; margin-bottom: 10px; display: block; }
+  .subject-card .name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .subject-card .count { font-size: 12px; color: var(--muted); }
+
+  /* ── FILE LIST ── */
+  .file-list { padding: 0 20px; }
+
+  .file-item {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+    text-decoration: none; color: inherit;
+  }
+  .file-item:active { transform: scale(0.98); }
+  .file-item:hover { border-color: var(--accent); }
+
+  .file-icon {
+    width: 42px; height: 42px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+    background: linear-gradient(135deg, #6c8ef522, #a78bfa22);
+    border: 1px solid var(--border);
+  }
+
+  .file-info { flex: 1; min-width: 0; }
+  .file-name {
+    font-size: 14px; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .file-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  .file-arrow { color: var(--muted); font-size: 16px; flex-shrink: 0; }
+
+  /* ── STATES ── */
+  .loading, .empty, .error {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .loading .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty p { font-size: 14px; line-height: 1.5; }
+  .error { color: #f87171; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--muted); letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 16px 20px 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">📚</div>
+    <div>
+      <h1>Notes Vault</h1>
+      <p>Your UPSC study material</p>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search notes…" oninput="onSearch()"/>
+  </div>
+</div>
+
+<div id="breadcrumb" class="breadcrumb" style="display:none"></div>
+
+<div id="app"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const API_KEY        = "AIzaSyAmcOoieD1tyI1URyW3fhpQqHg4sEQcaHc";
+const ROOT_FOLDER_ID = "1vAmNWkjf6EUZD8Qnrz9qdf4lQXfhfvtn";
+
+const SUBJECTS = {
+  Economy:      { emoji: "💹", color: "#22c55e" },
+  History:      { emoji: "🏛️", color: "#f59e0b" },
+  Anthropology: { emoji: "🧬", color: "#a78bfa" },
+  Geography:    { emoji: "🌍", color: "#38bdf8" },
+  Polity:       { emoji: "⚖️", color: "#f87171" },
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let currentFolderId   = ROOT_FOLDER_ID;
+let currentSubject    = null;
+let allFiles          = [];
+let subjectFolders    = {};
+
+// ── DRIVE API ─────────────────────────────────────────────────────────────────
+async function driveList(folderId) {
+  const url = `https://www.googleapis.com/drive/v3/files`
+    + `?q='${folderId}'+in+parents+and+trashed=false`
+    + `&fields=files(id,name,mimeType,modifiedTime,webViewLink,size)`
+    + `&orderBy=name`
+    + `&key=${API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Drive API error: ${res.status}`);
+  const data = await res.json();
+  return data.files || [];
+}
+
+function isFolder(f) {
+  return f.mimeType === "application/vnd.google-apps.folder";
+}
+
+function fileIcon(f) {
+  const name = f.name.toLowerCase();
+  if (name.endsWith(".pdf"))  return "📄";
+  if (name.endsWith(".doc") || name.endsWith(".docx")) return "📝";
+  if (name.endsWith(".ppt") || name.endsWith(".pptx")) return "📊";
+  if (name.endsWith(".xls") || name.endsWith(".xlsx")) return "📈";
+  return "📎";
+}
+
+function formatDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" });
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderLoading() {
+  document.getElementById("app").innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Loading…</p>
+    </div>`;
+}
+
+function renderError(msg) {
+  document.getElementById("app").innerHTML = `
+    <div class="error">⚠️ ${msg}</div>`;
+}
+
+function renderSubjects(folders) {
+  subjectFolders = {};
+  folders.forEach(f => { if (isFolder(f)) subjectFolders[f.name] = f; });
+
+  const grid = Object.entries(SUBJECTS).map(([name, meta]) => {
+    const folder = subjectFolders[name];
+    if (!folder) return "";
+    return `
+      <div class="subject-card" onclick="openSubject('${folder.id}','${name}')">
+        <div class="glow" style="background:${meta.color}"></div>
+        <span class="emoji">${meta.emoji}</span>
+        <div class="name">${name}</div>
+        <div class="count">Tap to browse</div>
+      </div>`;
+  }).join("");
+
+  document.getElementById("app").innerHTML = `
+    <div class="section-title">Subjects</div>
+    <div class="grid">${grid}</div>`;
+  updateBreadcrumb();
+}
+
+function renderFiles(files, subject) {
+  if (files.length === 0) {
+    document.getElementById("app").innerHTML = `
+      <div class="empty">
+        <div class="icon">📭</div>
+        <p>No notes here yet.<br>Send a file to the bot to add one!</p>
+      </div>`;
+    return;
+  }
+
+  const meta = SUBJECTS[subject] || {};
+  const items = files.map(f => `
+    <a class="file-item" href="${f.webViewLink}" target="_blank">
+      <div class="file-icon">${fileIcon(f)}</div>
+      <div class="file-info">
+        <div class="file-name">${f.name}</div>
+        <div class="file-meta">${formatDate(f.modifiedTime)}</div>
+      </div>
+      <span class="file-arrow">›</span>
+    </a>`).join("");
+
+  document.getElementById("app").innerHTML = `
+    <div class="section-title">${meta.emoji || "📁"} ${subject} — ${files.length} note${files.length !== 1 ? "s" : ""}</div>
+    <div class="file-list">${items}</div>`;
+}
+
+function updateBreadcrumb() {
+  const bc = document.getElementById("breadcrumb");
+  if (!currentSubject) {
+    bc.style.display = "none";
+    return;
+  }
+  bc.style.display = "flex";
+  bc.innerHTML = `
+    <span class="crumb" onclick="goHome()">📚 Vault</span>
+    <span class="sep">›</span>
+    <span class="current">${SUBJECTS[currentSubject]?.emoji || ""} ${currentSubject}</span>`;
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+async function goHome() {
+  currentSubject = null;
+  currentFolderId = ROOT_FOLDER_ID;
+  allFiles = [];
+  document.getElementById("searchInput").value = "";
+  renderLoading();
+  try {
+    const files = await driveList(ROOT_FOLDER_ID);
+    renderSubjects(files);
+  } catch(e) { renderError(e.message); }
+}
+
+async function openSubject(folderId, name) {
+  currentSubject = name;
+  currentFolderId = folderId;
+  renderLoading();
+  updateBreadcrumb();
+  try {
+    allFiles = await driveList(folderId);
+    renderFiles(allFiles, name);
+  } catch(e) { renderError(e.message); }
+}
+
+function onSearch() {
+  if (!currentSubject) return;
+  const q = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = allFiles.filter(f => f.name.toLowerCase().includes(q));
+  renderFiles(filtered, currentSubject);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.Telegram?.WebApp?.ready();
+goHome();
+</script>
+</body>
+</html>
